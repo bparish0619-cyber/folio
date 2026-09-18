@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Lets a run be started by hand from the Actions tab, on any branch.
+  workflow_dispatch:
 
 permissions:
   contents: read
