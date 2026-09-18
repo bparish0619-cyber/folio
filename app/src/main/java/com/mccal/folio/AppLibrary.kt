@@ -75,7 +75,10 @@ internal fun AppLibrary(
     }
     // Hidden apps stay out of the App Library entirely, like iOS; they're listed (after unlocking) in Settings.
     val visibleApps = remember(state.apps, query, showWork, workSwitch, hasWork, state.hiddenApps, editing) {
-        state.apps.filter { (if (workSwitch) it.isWork == showWork else !(hasWork && it.isWork)) && it.label.contains(query.trim(), true) &&
+        val text = query.trim()
+        // A renamed app answers to both names here, the same as in Spotlight.
+        state.apps.filter { (if (workSwitch) it.isWork == showWork else !(hasWork && it.isWork)) &&
+            (it.label.contains(text, true) || it.systemLabel.contains(text, true)) &&
             (editing || it.id !in state.hiddenApps) }
     }
     // iOS-style App Library: category tiles while browsing; the A–Z list for search, hidden and editing.
@@ -102,7 +105,7 @@ internal fun AppLibrary(
     }
     // Like iOS, a category opens as an expanded folder over the library instead of replacing it.
     openCategory?.takeIf { browsing }?.let { category ->
-        CategoryFolder(category.title, categorized[category].orEmpty(), onDismiss = { openCategory = null },
+        CategoryFolder(stringResource(category.title), categorized[category].orEmpty(), onDismiss = { openCategory = null },
             onLaunch = { openCategory = null; onLaunchFrom(it, null) }, onActions = { openCategory = null; onActions(it) })
     }
     Surface(modifier, shape = RoundedCornerShape(24.dp),
@@ -148,7 +151,7 @@ internal fun AppLibrary(
                     items(categorized.entries.toList().chunked(columns), key = { row -> "cat-" + row.first().key.name }) { row ->
                         Row(Modifier.fillMaxWidth().padding(bottom = 14.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                             row.forEach { (cat, apps) ->
-                                CategoryCard(cat.title, apps, Modifier.weight(1f), labelColor = ink, onLaunch = { onLaunchFrom(it, null) }) { openCategory = cat }
+                                CategoryCard(stringResource(cat.title), apps, Modifier.weight(1f), labelColor = ink, onLaunch = { onLaunchFrom(it, null) }) { openCategory = cat }
                             }
                             repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
                         }

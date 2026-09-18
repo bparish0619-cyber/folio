@@ -158,6 +158,7 @@ fun LauncherScreen(
     var resizeTopPitch by remember { mutableFloatStateOf(1f) }
     var resizeAppPitch by remember { mutableFloatStateOf(1f) }
     var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
+    var renameAppId by rememberSaveable { mutableStateOf<String?>(null) }
     var panelAppId by rememberSaveable { mutableStateOf<String?>(null) }
     var stackAppId by rememberSaveable { mutableStateOf<String?>(null) }
     var stackEditId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -843,7 +844,9 @@ fun LauncherScreen(
                 if (!isDefaultHome && !homeEdit.active && !drag.active) PreviewBar(onUseAsHome = { sheet = ""; onMakeDefault() },
                     onExit = { launcherActivity.moveTaskToBack(true) })
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                    if (!drag.active) IconButton(onClick = openDiscover, Modifier.size(32.dp).testTag("discover-page-link")) {
+                    // Only when there is a page to the left of Home: with Today View and Discover both off, the
+                    // button led nowhere (reported on r/GalaxyFold, 18 Sep 2026).
+                    if (!drag.active && (firstHome > 0 || discoverMode)) IconButton(onClick = openDiscover, Modifier.size(32.dp).testTag("discover-page-link")) {
                         Icon(Icons.Rounded.Explore, "Discover", tint = Color.White.copy(alpha = .65f), modifier = Modifier.size(17.dp))
                     }
                     // iOS: a "Search" capsule where the page dots are; the dots come back while paging or editing.
@@ -1443,7 +1446,11 @@ fun LauncherScreen(
                 onWidgets = openWidgetsFor,
                 onToggleHidden = { model.setHidden(app.id, app.id !in state.hiddenApps); selectedId = null },
                 onInfo = { onAppInfo(app); selectedId = null },
+                onRename = { renameAppId = app.id; selectedId = null },
                 onStack = if (pinned) {{ stackEditId = app.id; selectedId = null }} else null)
+        }
+        appsById[renameAppId]?.let { app ->
+            RenameAppAlert(app, onDismiss = { renameAppId = null }, onRename = { model.renameApp(app.id, it); renameAppId = null })
         }
         emptyCellIndex?.let { index ->
             HomeEditMenu(anchor = editPillBounds.takeIf { homeEdit.active }, onDismiss = { emptyCellIndex = null },
