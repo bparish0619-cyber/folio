@@ -232,6 +232,9 @@ internal fun RenameAppAlert(app: AppEntry, onDismiss: () -> Unit, onRename: (Str
     var name by remember(app.id) { mutableStateOf(if (app.label == app.systemLabel) "" else app.label) }
     val focus = remember { androidx.compose.ui.focus.FocusRequester() }
     LaunchedEffect(app.id) { runCatching { focus.requestFocus() } }
+    // The alert follows the system's light or dark theme, so the field takes its colors from the dialog
+    // rather than assuming white on dark.
+    val ink = androidx.compose.material3.MaterialTheme.colorScheme.onSurface
     androidx.compose.material3.AlertDialog(onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.rename_app)) },
         text = {
@@ -239,10 +242,17 @@ internal fun RenameAppAlert(app: AppEntry, onDismiss: () -> Unit, onRename: (Str
                 Text(stringResource(R.string.leave_it_empty_to_use_s_again, app.systemLabel), fontSize = 13.sp)
                 androidx.compose.foundation.text.BasicTextField(name, { name = it.take(MAX_APP_NAME) },
                     Modifier.padding(top = 12.dp).fillMaxWidth().clip(RoundedCornerShape(8.dp))
-                        .background(Color.White.copy(alpha = .1f)).padding(horizontal = 10.dp, vertical = 8.dp)
+                        .background(ink.copy(alpha = .08f)).padding(horizontal = 10.dp, vertical = 10.dp)
                         .focusRequester(focus).testTag("app-name"),
-                    singleLine = true, textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 15.sp),
-                    cursorBrush = androidx.compose.ui.graphics.SolidColor(Color.White),
+                    singleLine = true, textStyle = androidx.compose.ui.text.TextStyle(color = ink, fontSize = 17.sp),
+                    cursorBrush = androidx.compose.ui.graphics.SolidColor(ink),
+                    decorationBox = { field ->
+                        Box {
+                            // The app's own name as a hint, so an empty field doesn't look like a blank row.
+                            if (name.isEmpty()) Text(app.systemLabel, color = ink.copy(alpha = .4f), fontSize = 17.sp)
+                            field()
+                        }
+                    },
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Done),
                     keyboardActions = androidx.compose.foundation.text.KeyboardActions(onDone = { onRename(name) }))
             }
