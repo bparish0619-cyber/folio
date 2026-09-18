@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Lets a run be started by hand from the Actions tab, on any branch.
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -25,3 +27,11 @@ jobs:
       - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
       - name: Unit tests, lint and debug build
         run: ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+      # The debug APK installs as "Folio Dev" beside a released Folio, so it's safe to try on a daily phone.
+      - name: Upload the debug APK
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: folio-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
